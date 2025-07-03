@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Individuals{% endblock %}
+
+{% block content %}
+
+<h2>{{ member.name }} - Attendance Report</h2>
+<p>Contact: {{ member.contact }}</p>
+<p>Gender: {{ member.gender }}</p>
+<p>Residence: {{ member.residence }}</p>
+<p>Home District: {{ member.home_district }}</p>
+<p>Marital Status: {{ member.marital_status }}</p>  
+<p>Course/Profession: {{ member.course_Profession }}</p>
+<p>Year of Study: {{ member.year_of_study }}</p>
+<p>First Time: {{ member.first_time }}</p>
+<p>Center ID: {{ member.center_id }}</p>
+
+
+<h3>Services Attended</h3>
+<ul>
+  {% for s in attended_services %}
+    <li>Phaneroo {{ s }}</li>
+  {% endfor %}
+</ul>
+
+<h3>Services Missed</h3>
+<ul>
+  {% for s in missed_services %}
+    <li>Phaneroo {{ s }}</li>
+  {% endfor %}
+</ul>
+<a href="{{ url_for('database') }}">
+    <button style="padding: 8px 16px; background-color: #eee; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+        ← Back to Search
+    </button>
+</a>
+
+
+
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}SMS{% endblock %}
+
+{% block content %}
+<h2>Send SMS</h2>
+
+<form method="POST">
+  <div class="mb-3">
+    <label for="recipient" class="form-label">Recipient Group</label>
+    <select id="recipient" name="recipient" class="form-select" required>
+      <option value="">Select recipient group</option>
+      <option value="souls">Souls</option>
+      <option value="individuals">Individuals</option>
+      <option value="first_timers">First Timers</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="center" class="form-label">Fellowship Center</label>
+    <select id="center" name="center_id" class="form-select">
+      <option value="">All Centers</option>
+      {% for center in centers %}
+        <option value="{{ center.id }}">{{ center.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="message" class="form-label">Message</label>
+    <textarea id="message" name="message" class="form-control" rows="4" required></textarea>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Send SMS</button>
+</form>
+
+{% if recipients %}
+  <h4 class="mt-4">Recipients ({{ recipients|length }})</h4>
+  <ul class="list-group">
+    {% for member in recipients %}
+      <li class="list-group-item">
+        {{ member.name }} - {{ member.contact }} ({{ member.center.name if member.center else 'No Center' }})
+      </li>
+    {% endfor %}
+  </ul>
+{% elif request.method == 'POST' %}
+  <div class="alert alert-warning mt-3">No recipients found.</div>
+{% endif %}
+{% endblock %}

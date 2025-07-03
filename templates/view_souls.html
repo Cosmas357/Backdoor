@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Souls Registered</h2>
+  <p><strong>Total Souls:</strong> {{ total_souls }}</p>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Contact</th>
+        <th>Residence</th>
+        <th>First Time?</th>
+        <th>Service Number</th>
+        <th> Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for soul in souls %}
+      <tr>
+        <td>{{ soul.name }}</td>
+        <td>{{ soul.contact }}</td>
+        <td>{{ soul.residence }}</td>
+        <td>{{ soul.first_time }}</td>
+        <td>{{ soul.service_number }}</td>
+        <td>{{ soul.service_date.strftime('%Y-%m-%d') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

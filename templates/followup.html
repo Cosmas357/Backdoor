@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Register New Soul</h2>
+
+  <form method="POST" action="{{ url_for('followup') }}">
+    <!-- Flash Messages -->
+    <!-- {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %} -->
+
+    <!-- Basic Fields -->
+
+     <div class="mb-3">
+    <label for="center_id" class="form-label">Live-stream Center </label>
+    <select name="center_id" id="center_id" class="form-select" >
+      <option value="" disabled selected>Select Center</option>
+      {% for center in centers %}
+        <option value="{{ center.id }}" {% if center.id == selected_center %}selected{% endif %}>
+          {{ center.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+    <div class="mb-3">
+      <label for="name" class="form-label">Name</label>
+      <input type="text" name="name" class="form-control" required />
+    </div>
+
+    <div class="mb-3">
+      <label for="contact" class="form-label">Contact</label>
+      <input type="text" name="contact" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="residence" class="form-label">Residence</label>
+      <input type="text" name="residence" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label for="first_time" class="form-label">First Time?</label>
+      <select name="first_time" class="form-select" >
+        <option value="" disabled selected>Select</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+
+    <!-- Type Selection -->
+    <div class="mb-3">
+      <label class="form-label">Source</label>
+      <select name="source" id="source" class="form-select" required onchange="toggleFields()">
+        <option value="" disabled selected>Select</option>
+        <option value="Service">Service</option>
+        <option value="Outreach">Outreach</option>
+      </select>
+    </div>
+
+    <!-- Service Fields -->
+    <div id="service-fields" style="display: none;">
+      <div class="mb-3">
+        <label class="form-label">Service Number</label>
+        <input type="text" name="service_number" class="form-control" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label"> Date</label>
+        <input type="date" name="service_date" class="form-control" />
+      </div>
+    </div>
+
+    <!-- Outreach Field -->
+    <div id="outreach-field" style="display: none;">
+      <div class="mb-3">
+        <label class="form-label">Outreach Date</label>
+        <input type="date" name="outreach_date" class="form-control" />
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Register Soul</button>
+  </form>
+</div>
+
+<script>
+  function toggleFields() {
+    const source = document.getElementById("source").value;
+    document.getElementById("service-fields").style.display = source === "Service" ? "block" : "none";
+    document.getElementById("outreach-field").style.display = source === "Outreach" ? "block" : "none";
+  }
+</script>
+{% endblock %}

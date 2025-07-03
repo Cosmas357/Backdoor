@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Search Fellowship Database{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+
+    <h2 class="mb-4 text-center"> Search the Database </h2>
+
+    <form method="get" action="{{ url_for('database') }}" class="d-flex justify-content-center mb-4">
+        <input 
+            type="text" 
+            name="q" 
+            class="form-control me-2 w-50" 
+            placeholder="Search by name, gender, residence, course..." 
+            value="{{ request.args.get('q', '') }}"
+        >
+        <button type="submit" class="btn btn-primary">🔍 Search</button>
+        <a href="{{ url_for('export_csv', **request.args) }}" class="btn btn-success ms-2">Export to CSV</a>
+
+    </form>
+
+    {% if members %}
+  <h3>Search Results</h3>
+  <p><strong>Total Found:</strong> {{ members|length }}</p>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Contact</th>
+                        <th>Residence</th>
+                        <th>Home District</th>
+                        <th>Marital Status</th>
+                        <th>Course/Profession</th>
+                        <th>Year of Study</th>
+                        <th>First Time</th>
+                        <th>Center</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                    <tr>
+                        <td>{{ member.name }}</td>
+                        <td>{{ member.gender }}</td>
+                        <td>{{ member.contact }}</td>
+                        <td>{{ member.residence }}</td>
+                        <td>{{ member.home_district }}</td>
+                        <td>{{ member.marital_status }}</td>
+                        <td>{{ member.course_Profession }}</td>
+                        <td>{{ member.year_of_study }}</td>
+                        <td>{{ member.first_time }}</td>
+                        <td>{{ member.center.name if member.center else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-warning text-center">No matching records found.</div>
+    {% endif %}
+
+</div>
+{% endblock %}
