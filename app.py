@@ -5,6 +5,8 @@ import secrets
 from functools import wraps
 from sqlalchemy import text
 from flask_migrate import Migrate
+import os
+import io
 
 
 def login_required(f):
@@ -19,9 +21,17 @@ def login_required(f):
 print(secrets.token_hex(16))
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:HSPIRIT@localhost:5432/backdoor_db'
+
+db_uri = os.getenv('DATABASE_URL')
+if db_uri and db_uri.startswith('postgresql://'):
+    db_uri = db_uri.replace('postgresql://', 'postgresql+psycopg2://', 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = '1f0ae300be58cfb695c60651b83e799e'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+
+
+
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -398,7 +408,7 @@ def export_csv():
     output.headers["Content-type"] = "text/csv"
     return output
 
-import io
+
 
 
 
