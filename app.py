@@ -7,6 +7,24 @@ from sqlalchemy import text
 from flask_migrate import Migrate
 import os
 import io
+from dotenv import load_dotenv
+
+load_dotenv()
+
+app = Flask(__name__)
+
+db_uri = os.getenv('DATABASE_URL')
+if db_uri and db_uri.startswith('postgresql://'):
+    db_uri = db_uri.replace('postgresql://', 'postgresql+psycopg2://', 1)
+
+
+app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.secret_key = os.getenv("SECRET_KEY")  # Flask uses this
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")  # Also set here for extensions that may use it
+
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 def login_required(f):
@@ -20,21 +38,10 @@ def login_required(f):
 # Generate a random secret key (just once if needed)
 print(secrets.token_hex(16))
 
-app = Flask(__name__)
-
-db_uri = os.getenv('DATABASE_URL')
-if db_uri and db_uri.startswith('postgresql://'):
-    db_uri = db_uri.replace('postgresql://', 'postgresql+psycopg2://', 1)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+  # Load environment variables from .env file
 
 
 
-
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 
 with app.app_context():
     try:
@@ -365,7 +372,7 @@ from flask import Response
 
 @app.route('/export_csv')
 def export_csv():
-    query = Member.query
+    query = Member.query.join(Center, isouter=True)
     search_term = request.args.get('q')
 
     if search_term:
@@ -381,32 +388,42 @@ def export_csv():
                 Member.home_district.ilike(search),
                 Member.marital_status.ilike(search),
                 Member.first_time.ilike(search),
-                Center.name.ilike(search)  # ensure joined
+                Center.name.ilike(search)
             )
-        ).join(Center, isouter=True)
+        )
 
     members = query.all()
 
-    # Export logic
-    si = io.StringIO()
-    cw = csv.writer(si)
-    cw.writerow(['Name', 'Gender', 'Contact', 'Residence', 'Course/Profession', 'Year of Study', 'Center'])
+    def generate_csv():
+        data = io.StringIO()
+        writer = csv.writer(data)
+        writer.writerow(['Name', 'Gender', 'Contact', 'Residence', 'Course/Profession',
+                         'Year of Study', 'Home District', 'Marital Status', 'First Time', 'Center'])
 
-    for m in members:
-        cw.writerow([
-            m.name,
-            m.gender,
-            m.contact,
-            m.residence,
-            m.course_Profession,
-            m.year_of_study,
-            m.center.name if m.center else 'N/A'
-        ])
+        for m in members:
+            writer.writerow([
+                m.name,
+                m.gender or '',
+                m.contact or '',
+                m.residence or '',
+                m.course_Profession or '',
+                m.year_of_study or '',
+                m.home_district or '',
+                m.marital_status or '',
+                m.first_time or '',
+                m.center.name if m.center else ''
+            ])
 
-    output = make_response(si.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename=members_export.csv"
-    output.headers["Content-type"] = "text/csv"
-    return output
+        return data.getvalue()
+
+    csv_data = generate_csv()
+
+    return Response(
+        csv_data,
+        mimetype='text/csv',
+        headers={"Content-Disposition": "attachment;filename=members.csv"}
+    )
+
 
 
 
