@@ -19,3 +19,4 @@ instance/
 .vscode/
 .idea/
 *.swp
+.env
