@@ -24,6 +24,8 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = os.getenv("SECRET_KEY")  # Flask uses this
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")  # Also set here for extensions that may use it
 
+
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
@@ -486,5 +488,5 @@ def logout():
 
 if __name__ == '__main__':
    with app.app_context():
-        # db.create_all()
-    app.run(debug=True)
+        db.create_all()
+   app.run(debug=True)
