@@ -157,9 +157,10 @@ def attendance():
                             record.member.name,
                             record.member.contact or '',
                             record.member.residence or '',
-                            record.member.course or '',
+                            record.member.course_Profession or '',
                             record.member.first_time or '',
-                            record.date.strftime('%Y-%m-%d')
+                            record.service_date.strftime('%Y-%m-%d') if record.service_date else ''
+
                         ])
                     return '\n'.join([','.join(f'"{item}"' for item in row) for row in data])
 
@@ -427,6 +428,30 @@ def export_csv():
         headers={"Content-Disposition": "attachment;filename=members.csv"}
     )
 
+@app.route('/edit_member/<int:member_id>', methods=['GET'])
+def edit_member(member_id):
+    member = Member.query.get_or_404(member_id)
+    centers = Center.query.all()
+    return render_template('edit_member.html', member=member, centers=centers)
+
+@app.route('/update_member/<int:member_id>', methods=['POST'])
+def update_member(member_id):
+    member = Member.query.get_or_404(member_id)
+
+    member.name = request.form['name']
+    member.gender = request.form['gender']
+    member.contact = request.form['contact']
+    member.residence = request.form['residence']
+    member.course_Profession = request.form['course_Profession']
+    member.year_of_study = request.form['year_of_study']
+    member.home_district = request.form['home_district']
+    member.marital_status = request.form['marital_status']
+    member.first_time = request.form['first_time']
+    member.center_id = request.form['center_id']
+
+    db.session.commit()
+    flash('Member updated successfully!')
+    return redirect(url_for('database'))
 
 
 

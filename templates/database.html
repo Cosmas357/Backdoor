@@ -16,6 +16,8 @@
         >
         <button type="submit" class="btn btn-primary">🔍 Search</button>
         <a href="{{ url_for('export_csv', **request.args) }}" class="btn btn-success ms-2">Export to CSV</a>
+        
+
 
     </form>
 
@@ -37,6 +39,9 @@
                         <th>Year of Study</th>
                         <th>First Time</th>
                         <th>Center</th>
+                        <th>Edit</th>
+                        
+
                     </tr>
                 </thead>
                 <tbody>
@@ -52,6 +57,11 @@
                         <td>{{ member.year_of_study }}</td>
                         <td>{{ member.first_time }}</td>
                         <td>{{ member.center.name if member.center else 'N/A' }}</td>
+                          <td>
+      <a href="{{ url_for('edit_member', member_id=member.id) }}" class="btn btn-sm btn-warning">Edit</a>
+    </td>
+ 
+
                     </tr>
                     {% endfor %}
                 </tbody>
