@@ -7,7 +7,10 @@ from sqlalchemy import text
 from flask_migrate import Migrate
 import os
 import io
+from models import  Attendee, AttendanceRecord, PhanerooService, Center
+from extensions import db
 from dotenv import load_dotenv
+from sqlalchemy import text
 
 
 load_dotenv()
@@ -23,6 +26,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = os.getenv("SECRET_KEY")  # Flask uses this
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")  # Also set here for extensions that may use it
+
+
 
 
 
@@ -87,6 +92,11 @@ class Attendance(db.Model):
     service_date = db.Column(db.Date)
     member_id = db.Column(db.Integer, db.ForeignKey('member.id'), nullable=False)
     center_id = db.Column(db.Integer, db.ForeignKey('center.id'), nullable=False)
+    first_time = db.Column(db.String(10))  # 'Yes' or 'No'
+
+
+
+
 
 class Soul(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -132,51 +142,81 @@ def home():
 @login_required
 def attendance():
     centers, selected_center_id = get_centers_and_selected()
+
+    # Get from args or form
+    center_id_value = request.form.get('center_id') or request.args.get('center_id')
+    if center_id_value and center_id_value.isdigit():
+        selected_center_id = int(center_id_value)
+
+    selected_service = request.form.get('service_number') or request.args.get('service_number')
     service_numbers_raw = db.session.query(Attendance.service_number).distinct().all()
     service_numbers = [sn[0] for sn in service_numbers_raw]
-    selected_service = None
     records = []
-    first_timers_count  = sum(1 for r in records if r.member and r.member.first_time == 'Yes')
+
+    first_timers_count = 0
+
+    if selected_service and selected_service.isdigit():
+        selected_service = int(selected_service)
+        records = Attendance.query.filter_by(service_number=selected_service, center_id=selected_center_id).all()
+        first_timers_count = sum(1 for r in records if r.first_time == 'Yes')
 
 
-    if request.method == 'POST':
-        selected_service = request.form.get('service_number')
-        selected_center_id = int(request.form.get('center_id', selected_center_id))
-        export = request.form.get('export')
+        if request.form.get('export') == 'csv':
+            def generate_csv():
+                data = [['Name', 'Contact', 'Residence', 'Course', 'First Time', 'Date']]
+                for record in records:
+                    data.append([
+                        record.member.name,
+                        record.member.contact or '',
+                        record.member.residence or '',
+                        record.member.course_Profession or '',
+                        record.first_time or '',
+                        record.service_date.strftime('%Y-%m-%d') if record.service_date else ''
+                    ])
+                return '\n'.join([','.join(f'"{item}"' for item in row) for row in data])
 
-        if selected_service and selected_service.isdigit():
-            selected_service = int(selected_service)
-            records = Attendance.query.filter_by(service_number=selected_service, center_id=selected_center_id).all()
-            first_timers_count = sum(1 for r in records if r.member.first_time == 'Yes')
+            csv_data = generate_csv()
+            return Response(
+                csv_data,
+                mimetype='text/csv',
+                headers={"Content-Disposition": f"attachment;filename=attendance_service_{selected_service}.csv"}
+            )
 
-            if export == 'csv':
-                def generate_csv():
-                    data = [['Name', 'Contact', 'Residence', 'Course', 'First Time', 'Date']]
-                    for record in records:
-                        data.append([
-                            record.member.name,
-                            record.member.contact or '',
-                            record.member.residence or '',
-                            record.member.course_Profession or '',
-                            record.member.first_time or '',
-                            record.service_date.strftime('%Y-%m-%d') if record.service_date else ''
+    return render_template(
+        'view_attendance.html',
+        centers=centers,
+        selected_center_id=selected_center_id,
+        service_numbers=service_numbers,
+        selected_service=selected_service,
+        records=records,
+        first_timers_count=first_timers_count
+    )
 
-                        ])
-                    return '\n'.join([','.join(f'"{item}"' for item in row) for row in data])
 
-                csv_data = generate_csv()
-                return Response(
-                    csv_data,
-                    mimetype='text/csv',
-                    headers={"Content-Disposition": f"attachment;filename=attendance_service_{selected_service}.csv"}
-                )
-        else:
-            flash('Please select a valid service number.', 'danger')
-            return redirect(url_for('attendance', center_id=selected_center_id))
+@app.route('/delete_attendance', methods=['POST'])
+@login_required
+def delete_attendance():
+    ids_to_delete = request.form.getlist('delete_ids')
+    selected_center_id = request.form.get('center_id')
+    selected_service = request.form.get('service_number')
 
-    return render_template('attendance.html', centers=centers, selected_center_id=selected_center_id,
-                           service_numbers=service_numbers, records=records,
-                           selected_service=selected_service, first_timers_count=first_timers_count)
+    if ids_to_delete:
+        try:
+            Attendance.query.filter(Attendance.id.in_(ids_to_delete)).delete(synchronize_session=False)
+            db.session.commit()
+            flash(f"Deleted {len(ids_to_delete)} record(s).", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash("An error occurred while deleting.", "danger")
+    else:
+        flash("No records selected.", "warning")
+
+    # Redirect back to /attendance with selected center and service
+    return redirect(url_for('attendance', center_id=selected_center_id, service_number=selected_service))
+
+
+
+
 
 @app.route('/register', methods=['GET', 'POST'])
 @login_required
@@ -245,37 +285,44 @@ def mark_attendance():
             flash('Please select a service date.', 'danger')
             return redirect(url_for('mark_attendance', center_id=center_id))
 
-        # Convert date string to date object
         try:
             service_date = datetime.strptime(service_date_str, '%Y-%m-%d').date()
         except ValueError:
             flash('Invalid service date format.', 'danger')
             return redirect(url_for('mark_attendance', center_id=center_id))
 
+        # Move all attendance logic here
         service_number = int(service_number)
         member_id = int(member_id)
 
         existing_record = Attendance.query.filter_by(service_number=service_number, member_id=member_id).first()
+   
         if existing_record:
             flash('Attendance for this member has already been recorded for this service.', 'warning')
         else:
-            attendance = Attendance(
-                service_number=service_number,
-                member_id=member_id,
-                center_id=center_id,
-                service_date=service_date
-            )
-            db.session.add(attendance)
-            db.session.commit()
-            flash('Attendance marked successfully!', 'success')
+          # Check if this is the first time this member has attended any service
+         prior_attendance = Attendance.query.filter_by(member_id=member_id).first()
 
-        return redirect(url_for('mark_attendance', center_id=center_id))
+        first_time_value = "Yes" if not prior_attendance else "No"
 
+        attendance = Attendance(
+            service_number=service_number,
+            service_date=service_date,
+            member_id=member_id,
+            center_id=center_id,
+            first_time=first_time_value
+        )
+        db.session.add(attendance)
+        db.session.commit()
+        flash('Attendance marked successfully!', 'success')
+    return redirect(url_for('mark_attendance', center_id=center_id))
+
+# For GET request — just render the form
     return render_template('mark_attendance.html',
-                           member_names=member_names,
-                           member_dict=member_dict,
-                           centers=centers,
-                           selected_center_id=selected_center_id)
+                   member_names=member_names,
+                   member_dict=member_dict,
+                   centers=centers,
+                   selected_center_id=selected_center_id)
 
 
 @app.route('/search_members')
@@ -502,12 +549,23 @@ def sms():
     return render_template('sms.html', centers=centers, recipients=recipients)
 
 
-
 @app.route('/logout')
 def logout():
     session.pop('authenticated', None)
     flash('You have been logged out.', 'info')
     return redirect(url_for('home'))
+
+
+@app.route("/admin/alter-attendance")
+def alter_attendance_table():
+    try:
+        db.session.execute(text("ALTER TABLE attendance ADD COLUMN first_time VARCHAR;"))
+        db.session.commit()
+        return "✅ Column 'first_time' added successfully."
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
+
+
 
 # ------------------- MAIN -------------------
 

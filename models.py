@@ -31,9 +31,11 @@ class AttendanceRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     attendee_id = db.Column(db.Integer, db.ForeignKey('attendee.id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('phaneroo_service.id'), nullable=False)
+    first_time_status = db.Column(db.String(10), default='No')
+   
 
     def __repr__(self):
-        return f"<AttendanceRecord AttendeeID={self.attendee_id} ServiceID={self.service_id}>"
+        return f"<AttendanceRecord AttendeeID={self.attendee_id} ServiceID={self.service_id} FirstTime={self.first_time_status}>"
 
 class Soul(db.Model):
     id = db.Column(db.Integer, primary_key=True)
