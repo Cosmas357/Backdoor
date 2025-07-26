@@ -266,6 +266,9 @@ def mark_attendance():
     member_dict = {member.name: member.id for member in members}
     member_names = list(member_dict.keys())
 
+      # Define center_id from form or fallback to selected_center_id (even for GET)
+    center_id = int(request.form.get('center_id', selected_center_id))
+
     if request.method == 'POST':
         center_id = int(request.form.get('center_id', selected_center_id))
         service_number = request.form.get('service_number')
