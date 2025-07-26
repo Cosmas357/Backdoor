@@ -10,7 +10,7 @@ import io
 from models import  Attendee, AttendanceRecord, PhanerooService, Center
 from extensions import db
 from dotenv import load_dotenv
-from sqlalchemy import text
+
 
 
 load_dotenv()
@@ -556,14 +556,7 @@ def logout():
     return redirect(url_for('home'))
 
 
-@app.route("/admin/alter-attendance")
-def alter_attendance_table():
-    try:
-        db.session.execute(text("ALTER TABLE attendance ADD COLUMN first_time VARCHAR;"))
-        db.session.commit()
-        return "✅ Column 'first_time' added successfully."
-    except Exception as e:
-        return f"❌ Error: {str(e)}"
+
 
 
 
