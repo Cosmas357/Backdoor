@@ -266,11 +266,9 @@ def mark_attendance():
     member_dict = {member.name: member.id for member in members}
     member_names = list(member_dict.keys())
 
-      # Define center_id from form or fallback to selected_center_id (even for GET)
     center_id = int(request.form.get('center_id', selected_center_id))
 
     if request.method == 'POST':
-        center_id = int(request.form.get('center_id', selected_center_id))
         service_number = request.form.get('service_number')
         member_id = request.form.get('member_id')
         service_date_str = request.form.get('service_date')
@@ -278,54 +276,54 @@ def mark_attendance():
         # Validation
         if not service_number or not service_number.isdigit():
             flash('Please enter a valid service number.', 'danger')
-            return redirect(url_for('mark_attendance', center_id=center_id))
+            return redirect(url_for('mark_attendance'))
 
         if not member_id or not member_id.isdigit():
             flash('Please select a valid member from the suggestions.', 'danger')
-            return redirect(url_for('mark_attendance', center_id=center_id))
+            return redirect(url_for('mark_attendance'))
 
         if not service_date_str:
             flash('Please select a service date.', 'danger')
-            return redirect(url_for('mark_attendance', center_id=center_id))
+            return redirect(url_for('mark_attendance'))
 
         try:
             service_date = datetime.strptime(service_date_str, '%Y-%m-%d').date()
         except ValueError:
             flash('Invalid service date format.', 'danger')
-            return redirect(url_for('mark_attendance', center_id=center_id))
+            return redirect(url_for('mark_attendance'))
 
-        # Move all attendance logic here
         service_number = int(service_number)
         member_id = int(member_id)
 
         existing_record = Attendance.query.filter_by(service_number=service_number, member_id=member_id).first()
-   
         if existing_record:
             flash('Attendance for this member has already been recorded for this service.', 'warning')
         else:
-          # Check if this is the first time this member has attended any service
-         prior_attendance = Attendance.query.filter_by(member_id=member_id).first()
+            prior_attendance = Attendance.query.filter_by(member_id=member_id).first()
+            first_time_value = "Yes" if not prior_attendance else "No"
 
-        first_time_value = "Yes" if not prior_attendance else "No"
+            attendance = Attendance(
+                service_number=service_number,
+                service_date=service_date,
+                member_id=member_id,
+                center_id=center_id,
+                first_time=first_time_value
+            )
+            db.session.add(attendance)
+            db.session.commit()
+            flash('Attendance marked successfully!', 'success')
 
-        attendance = Attendance(
-            service_number=service_number,
-            service_date=service_date,
-            member_id=member_id,
-            center_id=center_id,
-            first_time=first_time_value
-        )
-        db.session.add(attendance)
-        db.session.commit()
-        flash('Attendance marked successfully!', 'success')
-    return redirect(url_for('mark_attendance', center_id=center_id))
+        return redirect(url_for('mark_attendance'))  # Only redirect after form processing!
 
-# For GET request — just render the form
-    return render_template('mark_attendance.html',
-                   member_names=member_names,
-                   member_dict=member_dict,
-                   centers=centers,
-                   selected_center_id=selected_center_id)
+    # This is only reached for GET requests (form rendering)
+    return render_template(
+        'mark_attendance.html',
+        member_names=member_names,
+        member_dict=member_dict,
+        centers=centers,
+        selected_center_id=center_id
+    )
+
 
 
 @app.route('/search_members')
