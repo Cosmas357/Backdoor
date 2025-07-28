@@ -570,6 +570,40 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('home'))
 
+# CONTINUING STUDENTS LOGIC ON FIRTS TIME ATTENDANCE 
+
+# @app.route('/fix_main_attendance')
+# def fix_main_attendance():
+#     from datetime import date
+
+#     center_id = 1  # Main Campus
+#     initial_service_number = 542
+#     initial_service_date = date(2025, 7, 10)  # Adjust if needed
+
+#     members = Member.query.filter_by(center_id=center_id).all()
+
+#     added = 0
+#     for member in members:
+#         already_attended_542 = Attendance.query.filter_by(member_id=member.id,service_number=542).first()
+#         if not already_attended_542:
+#             new_record = Attendance(
+#                 service_number=initial_service_number,
+#                 service_date=initial_service_date,
+#                 member_id=member.id,
+#                 center_id=center_id,
+#                 first_time='Yes'
+#             )
+#             db.session.add(new_record)
+#             added += 1
+
+#     db.session.commit()
+#     return f"{added} Main Campus members marked for Phaneroo {initial_service_number}."
+
+
+
+
+
+
 
 
 
