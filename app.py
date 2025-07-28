@@ -158,7 +158,7 @@ def attendance():
     if selected_service and selected_service.isdigit():
         selected_service = int(selected_service)
         records = Attendance.query.filter_by(service_number=selected_service, center_id=selected_center_id).all()
-        first_timers_count = sum(1 for r in records if r.first_time == 'Yes')
+        first_timers_count = sum(1 for r in records if r.first_time and r.first_time.strip().lower() == 'Yes')
 
 
         if request.form.get('export') == 'csv':
