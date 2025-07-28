@@ -158,7 +158,7 @@ def attendance():
     if selected_service and selected_service.isdigit():
         selected_service = int(selected_service)
         records = Attendance.query.filter_by(service_number=selected_service, center_id=selected_center_id).all()
-        first_timers_count = sum(1 for r in records if r.first_time and r.first_time.strip().lower() == 'Yes')
+        first_timers_count = sum(1 for r in records if r.first_time and r.first_time.strip().lower() == 'yes')
 
 
         if request.form.get('export') == 'csv':
@@ -299,19 +299,33 @@ def mark_attendance():
         if existing_record:
             flash('Attendance for this member has already been recorded for this service.', 'warning')
         else:
-            prior_attendance = Attendance.query.filter_by(member_id=member_id).first()
-            first_time_value = "Yes" if not prior_attendance else "No"
+            # Find the current earliest attendance for the member (if any)
+         earliest_attendance = Attendance.query.filter_by(member_id=member_id).order_by(Attendance.service_number.asc()).first()
 
-            attendance = Attendance(
+         if earliest_attendance is None:
+        # No previous attendance, this must be first time
+          first_time_value = 'Yes'
+         else:
+          if service_number < earliest_attendance.service_number:
+            # This attendance is earlier than the current earliest, update that one to 'No'
+            earliest_attendance.first_time = 'No'
+            db.session.add(earliest_attendance)
+            first_time_value = 'Yes'
+          else:
+            # This attendance is not the earliest
+            first_time_value = 'No'
+
+
+         attendance = Attendance(
                 service_number=service_number,
                 service_date=service_date,
                 member_id=member_id,
                 center_id=center_id,
                 first_time=first_time_value
             )
-            db.session.add(attendance)
-            db.session.commit()
-            flash('Attendance marked successfully!', 'success')
+         db.session.add(attendance)
+         db.session.commit()
+         flash('Attendance marked successfully!', 'success')
 
         return redirect(url_for('mark_attendance'))  # Only redirect after form processing!
 
@@ -555,7 +569,6 @@ def logout():
     session.pop('authenticated', None)
     flash('You have been logged out.', 'info')
     return redirect(url_for('home'))
-
 
 
 
