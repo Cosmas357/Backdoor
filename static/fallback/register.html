@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register Member (Offline)</title>
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+  <script src="/static/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+
+  <!-- Simple Offline Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">BACKDOOR (Offline)</a>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <h2>Register New Member (Offline Mode)</h2>
+
+    <form>
+      <div class="mb-3">
+        <label for="center_id" class="form-label">Live-stream Center </label>
+        <select class="form-select" id="center_id" name="center_id" required>
+          <option value="">-- Select Center --</option>
+          <option value="1">Main Campus</option>
+          <option value="2">Nyabikoni</option>
+          <option value="3">Little Ritz</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="name" class="form-label">Full Name *</label>
+        <input type="text" class="form-control" id="name" name="name" required />
+      </div>
+
+      <div class="mb-3">
+        <label for="gender" class="form-label">Gender:</label>
+        <select name="gender" id="gender" class="form-select" required>
+          <option value="">-- Select Gender --</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="contact" class="form-label">Contact</label>
+        <input type="tel" class="form-control" id="contact" name="contact" required pattern="\d{10}" maxlength="10" placeholder="e.g. 0771234567" />
+      </div>
+
+      <div class="mb-3">
+        <label for="residence" class="form-label">Residence / Hostel</label>
+        <input type="text" class="form-control" id="residence" name="residence" required />
+      </div>
+
+      <div class="mb-3">
+        <label for="home_district" class="form-label">Home District</label>
+        <input type="text" class="form-control" id="home_district" name="home_district" />
+      </div>
+
+      <div class="mb-3">
+        <label for="marital_status" class="form-label">Marital Status</label>
+        <select class="form-select" id="marital_status" name="marital_status">
+          <option value="">-- Select Marital Status --</option>
+          <option value="Single">Single</option>
+          <option value="Married">Married</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="course_Profession" class="form-label">Course/Profession</label>
+        <input type="text" class="form-control" id="course_Profession" name="course_Profession" required />
+      </div>
+
+      <div class="mb-3">
+        <label for="year_of_study" class="form-label">Year of Study</label>
+        <input type="text" class="form-control" id="year_of_study" name="year_of_study" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">First Time Attending? *</label>
+        <select class="form-select" name="first_time" required>
+          <option value="">-- Select --</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Register</button>
+    </form>
+  </div>
+
+</body>
+</html>

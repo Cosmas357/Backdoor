@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mark Attendance (Offline)</title>
+  <link href="/static/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="/static/css/autoComplete.css" rel="stylesheet" />
+  <script src="/static/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+
+  <!-- Static navbar fallback -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">BACKDOOR</a>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <h2>Mark Attendance (Offline Preview)</h2>
+
+    <div class="alert alert-info">
+      <strong>Note:</strong> This is an offline version. Real data like centers and members will be available when you go online.
+    </div>
+
+    <form>
+      <div class="mb-3">
+        <label for="center_id" class="form-label">Live-stream Center *</label>
+        <select class="form-select" id="center_id" name="center_id" required>
+          <option value="">-- Select Center --</option>
+          <option value="1">Main Campus</option>
+          <option value="2">Nyabikoni</option>
+          <option value="3">Little Ritz</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="service_number" class="form-label">Service Number *</label>
+        <input type="number" class="form-control" id="service_number" name="service_number" required min="1" />
+      </div>
+
+      <div class="mb-3">
+        <label for="service_date" class="form-label">Service Date</label>
+        <input type="date" class="form-control" id="service_date" name="service_date" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="member_name" class="form-label">Select Member *</label>
+        <input id="member_name" name="member_name" class="form-control" placeholder="Start typing member name..." autocomplete="off" required />
+        <input type="hidden" id="member_id" name="member_id" />
+      </div>
+
+      <button type="submit" class="btn btn-primary" disabled>Mark Attendance</button>
+    </form>
+  </div>
+
+  <script src="/static/js/autoComplete.min.js"></script>
+  <script>
+    // Placeholder for offline - autocomplete is disabled
+    document.getElementById("member_name").addEventListener("input", () => {
+      alert("Autocomplete is disabled while offline.");
+    });
+  </script>
+</body>
+</html>

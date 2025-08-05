@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Send SMS (Offline)</title>
+  <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Static Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">BACKDOOR</a>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <h2>Send SMS (Offline Preview)</h2>
+
+    <form>
+      <div class="mb-3">
+        <label for="recipient" class="form-label">Recipient Group</label>
+        <select id="recipient" name="recipient" class="form-select" disabled>
+          <option value="">Select recipient group</option>
+          <option value="souls">Souls</option>
+          <option value="individuals">Individuals</option>
+          <option value="first_timers">First Timers</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="center" class="form-label">Fellowship Center</label>
+        <select id="center" name="center_id" class="form-select" disabled>
+          <option value="">All Centers</option>
+          <option value="1">Main Campus</option>
+          <option value="2">Nyabikoni</option>
+          <option value="3">Little Ritz</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="message" class="form-label">Message</label>
+        <textarea id="message" name="message" class="form-control" rows="4" disabled></textarea>
+      </div>
+
+      <button type="button" class="btn btn-primary" disabled>Send SMS</button>
+    </form>
+
+    <div class="alert alert-info mt-4">
+      Recipient list and message sending are disabled in offline mode.
+    </div>
+  </div>
+
+</body>
+</html>

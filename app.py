@@ -1,38 +1,47 @@
-from flask import Flask, make_response, render_template, request, redirect, url_for, flash, Response, jsonify,session
+from flask import Flask, make_response, render_template, request, redirect, url_for, flash, Response, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date, datetime
 import secrets
 from functools import wraps
 from sqlalchemy import text
 from flask_migrate import Migrate
-import os
 import io
-from models import  Attendee, AttendanceRecord, PhanerooService, Center
-from extensions import db
+import os
+
 from dotenv import load_dotenv
-
-
-
 load_dotenv()
 
-app = Flask(__name__)
+from models import Attendee, AttendanceRecord, PhanerooService, Center, Soul
+from extensions import db
 
-db_uri = os.getenv('DATABASE_URL')
-if db_uri and db_uri.startswith('postgresql://'):
-    db_uri = db_uri.replace('postgresql://', 'postgresql+psycopg2://', 1)
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
+app = Flask(__name__, static_folder='static', static_url_path='/static')
+
+# ✅ Load from environment
+db_uri = os.getenv("DATABASE_URL")
+if not db_uri:
+    raise ValueError("DATABASE_URL not set")
+
+# Optional: fix scheme if needed (for psycopg2)
+if db_uri.startswith("postgres://"):
+    db_uri = db_uri.replace("postgres://", "postgresql+psycopg2://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.secret_key = os.getenv("SECRET_KEY")  # Flask uses this
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")  # Also set here for extensions that may use it
+app.secret_key = os.getenv("SECRET_KEY")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
-
-
-
-
-db = SQLAlchemy(app)
+# ✅ Init DB and migrations
+db.init_app(app)
 migrate = Migrate(app, db)
+
+# ✅ Set up direct Neon session (if needed separately)
+engine_online = create_engine(db_uri)
+SessionOnline = sessionmaker(bind=engine_online)
+online_session = SessionOnline()
+
 
 
 def login_required(f):
@@ -64,12 +73,12 @@ ACCESS_PASSWORD = '123'
 
 # ------------------- MODELS -------------------
 
-class Center(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    members = db.relationship('Member', backref='center', lazy=True)
-    souls = db.relationship('Soul', backref='center', lazy=True)
-    attendances = db.relationship('Attendance', backref='center', lazy=True)
+# class Center(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     name = db.Column(db.String(100), unique=True, nullable=False)
+#     members = db.relationship('Member', backref='center', lazy=True)
+#     souls = db.relationship('Soul', backref='center', lazy=True)
+#     attendances = db.relationship('Attendance', backref='center', lazy=True)
 
 class Member(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -85,6 +94,9 @@ class Member(db.Model):
     center_id = db.Column(db.Integer, db.ForeignKey('center.id'), nullable=False)
     # center = db.relationship('Center', backref='members')
     attendances = db.relationship('Attendance', backref='member', lazy=True)
+    synced = db.Column(db.Boolean, default=False)
+
+
 
 class Attendance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -93,22 +105,23 @@ class Attendance(db.Model):
     member_id = db.Column(db.Integer, db.ForeignKey('member.id'), nullable=False)
     center_id = db.Column(db.Integer, db.ForeignKey('center.id'), nullable=False)
     first_time = db.Column(db.String(10))  # 'Yes' or 'No'
+    synced = db.Column(db.Boolean, default=False)
 
 
 
 
-
-class Soul(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    contact = db.Column(db.String(10), nullable=False)
-    residence = db.Column(db.String(100), nullable=False)
-    first_time = db.Column(db.String(10), nullable=True)
-    service_number = db.Column(db.Integer, nullable=True)
-    service_date = db.Column(db.Date, default=date.today, nullable=True)
-    outreach_date = db.Column(db.Date, nullable=True)
-    source = db.Column(db.String(20))
-    center_id = db.Column(db.Integer, db.ForeignKey('center.id'), nullable=False)
+# class Soul(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     name = db.Column(db.String(100), nullable=False)
+#     contact = db.Column(db.String(10), nullable=False)
+#     residence = db.Column(db.String(100), nullable=False)
+#     first_time = db.Column(db.String(10), nullable=True)
+#     service_number = db.Column(db.Integer, nullable=True)
+#     service_date = db.Column(db.Date, default=date.today, nullable=True)
+#     outreach_date = db.Column(db.Date, nullable=True)
+#     source = db.Column(db.String(20))
+#     center_id = db.Column(db.Integer, db.ForeignKey('center.id'), nullable=False)
+#     synced = db.Column(db.Boolean, default=False)
 
 # ------------------- UTILITY -------------------
 
@@ -247,7 +260,8 @@ def register():
             name=name, contact=contact, residence=residence,
             course_Profession=course_Profession, first_time=first_time, center_id=center_id,
             year_of_study=year_of_study,gender=gender,
-            home_district=home_district, marital_status=marital_status
+            home_district=home_district, marital_status=marital_status,
+            synced=False  
         )
         db.session.add(new_member)
         db.session.commit()
@@ -321,7 +335,8 @@ def mark_attendance():
                 service_date=service_date,
                 member_id=member_id,
                 center_id=center_id,
-                first_time=first_time_value
+                first_time=first_time_value,
+                synced=False  
             )
          db.session.add(attendance)
          db.session.commit()
@@ -374,7 +389,8 @@ def followup():
                 residence=residence,
                 first_time=first_time,
                 source=source,
-                center_id=center_id
+                center_id=center_id,
+                synced=False  
             )
 
             if source == "Service":
@@ -510,6 +526,7 @@ def update_member(member_id):
     member.marital_status = request.form['marital_status']
     member.first_time = request.form['first_time']
     member.center_id = request.form['center_id']
+    member.synced = False
 
     db.session.commit()
     flash('Member updated successfully!')
@@ -599,10 +616,67 @@ def logout():
 #     db.session.commit()
 #     return f"{added} Main Campus members marked for Phaneroo {initial_service_number}."
 
+@app.route('/offline.html')
+def offline_page():
+    return app.send_static_file('offline.html')
 
+@app.route('/sync_data')
+@login_required
+def sync_data():
+    # 1) Pull unsynced Souls from local (SQLite)
+    unsynced_souls = Soul.query.filter_by(synced=False).all()
 
+    # 2) Pull unsynced Members (Attendees) from local
+    unsynced_members = Attendee.query.filter_by(synced=False).all()
 
+    # Counters
+    souls_count = len(unsynced_souls)
+    members_count = len(unsynced_members)
 
+    # 3) Push Souls online
+    for soul in unsynced_souls:
+        online_soul = Soul(
+            name=soul.name,
+            contact=soul.contact,
+            residence=soul.residence,
+            first_time=soul.first_time,
+            service_number=soul.service_number,
+            service_date=soul.service_date,
+            outreach_date=soul.outreach_date,
+            source=soul.source,
+            center_id=soul.center_id,
+            synced=True
+        )
+        online_session.add(online_soul)
+        soul.synced = True  # mark local record as synced
+
+    # 4) Push Members online
+    for member in unsynced_members:
+        online_member = Attendee(
+            name=member.name,
+            contact=member.contact,
+            residence=member.residence,
+            course_Profession=member.course_Profession,
+            first_time=member.first_time,
+            center_id=member.center_id,
+            year_of_study=member.year_of_study,
+            synced=True
+        )
+        online_session.add(online_member)
+        member.synced = True  # mark local record as synced
+
+    # 5) Commit both DBs
+    try:
+        online_session.commit()
+        db.session.commit()
+        flash(f"✅ Synced {souls_count} souls and {members_count} members.", "success")
+    except Exception as e:
+        online_session.rollback()
+        db.session.rollback()
+        flash(f"❌ Sync failed: {e}", "danger")
+        return redirect(url_for('home'))  # on failure
+
+    return redirect(url_for('home'))  # ✅ on success
 
 
 
