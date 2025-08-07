@@ -31,9 +31,9 @@
       {% endif %}
     {% endwith %}
 
-    <form method="POST">
+    <!-- <form method="POST"> -->
       <!-- Center Dropdown -->
-      <div class="mb-3">
+      <!-- <div class="mb-3">
         <label for="center_id" class="form-label">Live-stream Center *</label>
         <select class="form-select" id="center_id" name="center_id" required>
           <option value="">-- Select Center --</option>
@@ -63,7 +63,71 @@
       </div>
 
       <button type="submit" class="btn btn-primary">Mark Attendance</button>
-    </form>
+    </form> -->
+
+
+<form method="POST">
+  <!-- Center Dropdown -->
+  <div class="mb-3">
+    <label for="center_id" class="form-label">Live-stream Center *</label>
+    <select class="form-select" id="center_id" name="center_id" required>
+      <option value="">-- Select Center --</option>
+      {% for center in centers %}
+        <option value="{{ center.id }}" {% if center.id == selected_center_id %}selected{% endif %}>
+          {{ center.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- Service Number -->
+  <div class="mb-3">
+    <label for="service_number" class="form-label">Service Number *</label>
+    <input
+      type="number"
+      class="form-control"
+      id="service_number"
+      name="service_number"
+      required
+      min="1"
+      value="{{ selected_service_number }}"
+    />
+  </div>
+
+  <!-- Service Date -->
+  <div class="mb-3">
+    <label for="service_date" class="form-label">Service Date *</label>
+    <input
+      type="date"
+      class="form-control"
+      id="service_date"
+      name="service_date"
+      required
+      value="{{ selected_service_date }}"
+    />
+  </div>
+
+  <!-- Member Name and ID (no change here) -->
+  <div class="mb-3">
+    <label for="member_name" class="form-label">Select Member *</label>
+    <input
+      id="member_name"
+      name="member_name"
+      class="form-control"
+      placeholder="Start typing member name..."
+      autocomplete="off"
+      required
+    />
+    <input type="hidden" id="member_id" name="member_id" />
+  </div>
+
+  <button type="submit" class="btn btn-primary">Mark Attendance</button>
+</form>
+
+
+
+
+
   </div>
 
   <script src="{{ url_for('static', filename='js/autoComplete.min.js') }}"></script>
